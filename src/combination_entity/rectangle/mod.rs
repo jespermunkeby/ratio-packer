@@ -16,6 +16,12 @@ pub struct Rectangle{
     bottom: f32
 }
 
+impl Default for Rectangle {
+    fn default() -> Rectangle {
+        Rectangle::new(Position::Center([0.,0.].into()), 1., 1.)
+    }
+}
+
 
 impl Rectangle{
     pub fn new(position: Position, w:f32, h:f32) -> Rectangle{

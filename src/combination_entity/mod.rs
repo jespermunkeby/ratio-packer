@@ -1,12 +1,15 @@
 mod rectangle;
 
+use std::clone;
+
 use log::{debug, error};
-use rectangle::{Position, Rectangle};
+pub use rectangle::{Position, Rectangle};
 use rectangle::vec2::Vec2;
 
 #[derive(Clone)]
 pub struct CombinationEntity{
     aspect_ratio: f32,
+    id: Option<u32>,
     combination: Option<Combination>,
 }
 
@@ -159,14 +162,19 @@ fn test_ratios_and_bound_to_rects(){
     }
 }
 
-
+#[derive(Clone)]
+pub struct RectangleWithID {
+    pub id: Option<u32>,
+    pub rectangle: Rectangle
+}
 
 impl CombinationEntity {
 
-    pub fn new(aspect_ratio: f32) -> CombinationEntity{
+    pub fn new(aspect_ratio: f32, id:Option<u32>) -> CombinationEntity{
         CombinationEntity{
             aspect_ratio,
-            combination: Option::None
+            combination: Option::None,
+            id: id
         }
     }
 
@@ -184,87 +192,26 @@ impl CombinationEntity {
             combination_direction
         });
 
-        // self.aspect_ratio = match combination_direction {
-        //     Direction::Horizontal => (self.aspect_ratio() * other.aspect_ratio())/(self.aspect_ratio() + other.aspect_ratio()),
-        //     Direction::Vertical => (self.aspect_ratio() + other.aspect_ratio())/(self.aspect_ratio() * other.aspect_ratio()),
-        // }
-
         self.aspect_ratio = combined_ratio(self.aspect_ratio(), other.aspect_ratio(), combination_direction);
     }
 
-    pub fn get_rects(&self)-> Vec<Rectangle>{
-        self._get_rects(Rectangle::new(Position::Center([0.,0.].into()), 1., 1.),)
-    }
-
-    fn _get_rects(&self, bound: Rectangle) -> Vec<Rectangle>{
+    pub fn get_rects_with_id(&self, bound: Rectangle) -> Vec<RectangleWithID>{
 
         return match &self.combination {
             Some(combination) => {
                 let a = combination.elements.0.to_owned();
                 let b = combination.elements.1.to_owned();
-                // let bound_aspect_ratio = bound.h()/bound.w();
 
                 let (bound_a, bound_b) = ratios_and_bound_to_rects(a.aspect_ratio(), b.aspect_ratio(), bound, combination.combination_direction);
-                [a._get_rects(bound_a), b._get_rects(bound_b)].concat()
-                // match combination.combination_direction {
-
-
-                //     // PROBLEM
-                //     Direction::Vertical => {
-                //         let rect_a = Rect::from_corner_points(
-                //             [0.,0.], 
-                //             [bound.w(),bound.h()* (a.aspect_ratio()/(a.aspect_ratio()+b.aspect_ratio()))]
-                //         ).shift(bound.bottom_left());
-
-                //         let rect_b = Rect::from_corner_points(
-                //             [0.,0.], 
-                //             [bound.w(),bound.h()* (b.aspect_ratio()/(a.aspect_ratio()+b.aspect_ratio()))]
-                //         ).shift(rect_a.top_left());
-
-                //         draw.rect().xy(rect_a.xy()*MULTIPLIER).wh(rect_a.wh()*MULTIPLIER).stroke_color(BLUE).stroke_weight(6.).no_fill();
-                //         draw.rect().xy(rect_b.xy()*MULTIPLIER).wh(rect_b.wh()*MULTIPLIER).stroke_color(BLUE).stroke_weight(6.).no_fill();
-
-                //         [a._get_rects(rect_a, draw), b._get_rects(rect_b, draw)]
-                //     },
-
-                //     Direction::Horizontal => {
-                //         let rect_a = Rect::from_corners(
-                //             [0.,0.].into(), 
-                //             [a.aspect_ratio()/(bound.h()/bound.w()), bound.h()].into()
-                //         ).shift(bound.top_left());
-
-                //         let rect_b = Rect::from_corners(
-                //             [0.,0.].into(), 
-                //             [b.aspect_ratio()/(bound.h()/bound.w()), bound.h()].into()
-                //         ).shift(rect_a.top_right());
-
-                        
-                //         // draw.rect().xy(rect_a.xy()*MULTIPLIER).wh(rect_a.wh()*MULTIPLIER).stroke_color(BLUE).stroke_weight(6.).no_fill();
-                //         // draw.rect().xy(rect_b.xy()*MULTIPLIER).wh(rect_b.wh()*MULTIPLIER).stroke_color(BLUE).stroke_weight(6.).no_fill();
-
-                //         [a._get_rects(rect_a, draw), b._get_rects(rect_b, draw)]
-                //     }
-                // }.concat()
-
-
-                
+                [a.get_rects_with_id(bound_a), b.get_rects_with_id(bound_b)].concat()
             },
 
             None => {
 
-                [inscribe_ratio(self.aspect_ratio(), bound)].into()
-                // let rect = Rect::from_xy_wh(bound.xy(), 
-                //     if (bound.h()/bound.w()) < self.aspect_ratio() {  //vertically bounded
-                //         [bound.h()/self.aspect_ratio(),bound.h()].into()
-                //     }  else {                                         //horizontally bounded or equal
-                //         [bound.w(),bound.w()*self.aspect_ratio()].into()
-                //     }
-                // );
-
-                // draw.rect().xy(rect.xy()*MULTIPLIER).wh(rect.wh()*MULTIPLIER).stroke_color(RED).stroke_weight(1.).no_fill();
-
-                // [rect].into()
-
+                [RectangleWithID {
+                    id: self.id,
+                    rectangle: inscribe_ratio(self.aspect_ratio(), bound),
+                }].into()
             }
         };
     }

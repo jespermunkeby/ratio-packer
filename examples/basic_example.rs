@@ -1,8 +1,7 @@
 
 use std::env;
-use ratio_packer::combination_entity::{CombinationEntity, Direction};
+use ratio_packer::combination_entity::{CombinationEntity, Direction, Rectangle};
 use nannou::{prelude::*};
-
 
 struct Model {
 }
@@ -19,13 +18,12 @@ fn update(app: &App, model: &mut Model, _update: Update) {
 
 fn view(app: &App, model: &Model, frame: Frame){
 
-
     let rects = [
-        CombinationEntity::new(1.),
-        CombinationEntity::new(1.),
-        CombinationEntity::new(4.),
-        CombinationEntity::new(0.5),
-        CombinationEntity::new(0.2),
+        CombinationEntity::new(1., Option::None),
+        CombinationEntity::new(1., Option::None),
+        CombinationEntity::new(4., Option::None),
+        CombinationEntity::new(0.5, Option::None),
+        CombinationEntity::new(0.2, Option::None),
     ];
 
     let mut a = rects[0].clone();
@@ -42,9 +40,9 @@ fn view(app: &App, model: &Model, frame: Frame){
     let draw = app.draw();
     draw.background().rgb(0.,0., 0.); 
     let factor = 300.;
-    for rect in a.get_rects(){
+    for rect_and_id in a.get_rects_with_id(Rectangle::default()){
        
-        draw.rect().xy([rect.center().x*factor, rect.center().y*factor].into()).w(rect.w()*factor).h(rect.h()*factor).stroke_color(RED).stroke_weight(1.);
+        draw.rect().xy([rect_and_id.rectangle.center().x*factor, rect_and_id.rectangle.center().y*factor].into()).w(rect_and_id.rectangle.w()*factor).h(rect_and_id.rectangle.h()*factor).stroke_color(RED).stroke_weight(1.);
     }
 
     draw.to_frame(app, &frame).unwrap();
